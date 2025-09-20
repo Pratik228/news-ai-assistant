@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 });
 
 // Import and use route modules
-// app.use('/api/chat', require('./routes/chat'));
+app.use("/api/chat", require("./routes/chat"));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

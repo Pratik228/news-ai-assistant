@@ -2,7 +2,7 @@
 
 A RAG-powered news chatbot that uses Gemini AI to answer questions based on real-time news articles from RSS feeds.
 
-## 🏗️ Phase 1: Backend Foundation & Data Pipeline
+## 🏗️ Phase 1: Backend Foundation & Data Pipeline ✅
 
 This phase includes:
 
@@ -11,6 +11,16 @@ This phase includes:
 - Jina AI embeddings integration
 - Qdrant vector database for semantic search
 - Complete data pipeline for processing news articles
+
+## 🤖 Phase 2: RAG Backend Implementation ✅
+
+This phase includes:
+
+- Redis-based session management
+- RAG pipeline with Gemini AI integration
+- Chat API endpoints with conversation history
+- Multi-turn conversation support
+- Source attribution and context awareness
 
 ## 🚀 Quick Start
 
@@ -32,14 +42,19 @@ Edit `.env` and add your API keys:
 
 - `GEMINI_API_KEY`: Get from [Google AI Studio](https://aistudio.google.com/)
 - `JINA_API_KEY`: Get from [Jina AI](https://jina.ai/)
+- `REDIS_HOST`: Redis host (default: localhost)
+- `REDIS_PORT`: Redis port (default: 6379)
 
-### 3. Start Qdrant Vector Database
+### 3. Start Services (Qdrant + Redis)
 
 ```bash
 docker-compose up -d
 ```
 
-This will start Qdrant on `http://localhost:6333`
+This will start:
+
+- Qdrant on `http://localhost:6333`
+- Redis on `localhost:6379`
 
 ### 4. Run the Complete Pipeline
 
@@ -68,6 +83,21 @@ npm run dev
 
 The server will be available at `http://localhost:3000`
 
+### 6. Test the Chat API
+
+```bash
+node test-chat.js
+```
+
+Or test manually:
+
+```bash
+# Send a chat message
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the latest news about AI?"}'
+```
+
 ## 📁 Project Structure
 
 ```
@@ -76,13 +106,16 @@ src/
 │   ├── newsIngestion.js    # RSS feed fetching and content extraction
 │   ├── embeddings.js       # Jina AI embeddings integration
 │   ├── vectorStore.js      # Qdrant vector database operations
-│   └── pipeline.js         # Complete pipeline orchestration
+│   ├── pipeline.js         # Complete pipeline orchestration
+│   ├── sessionManager.js   # Redis-based session management
+│   └── ragPipeline.js      # RAG pipeline with Gemini integration
 ├── routes/
-│   └── chat.js            # Chat API endpoints (Phase 2)
+│   └── chat.js            # Chat API endpoints
 └── server.js              # Express server setup
 
 data/                      # JSON files with ingested articles
-docker-compose.yml         # Qdrant database setup
+docker-compose.yml         # Qdrant + Redis services setup
+test-chat.js              # Chat API testing script
 ```
 
 ## 🛠️ Available Scripts
@@ -90,6 +123,30 @@ docker-compose.yml         # Qdrant database setup
 - `npm start` - Start the production server
 - `npm run dev` - Start development server with nodemon
 - `npm run ingest` - Run news ingestion and pipeline
+- `node test-chat.js` - Test the chat API endpoints
+
+## 📡 API Endpoints
+
+### Chat Endpoints
+
+- `POST /api/chat` - Send a message and get AI response
+
+  ```json
+  {
+    "message": "What's the latest AI news?",
+    "sessionId": "sess_123" // optional
+  }
+  ```
+
+- `GET /api/chat/sessions/:sessionId/history` - Get chat history
+- `DELETE /api/chat/sessions/:sessionId` - Clear session or delete it
+- `GET /api/chat/sessions/:sessionId/stats` - Get session statistics
+- `POST /api/chat/sessions` - Create a new session
+- `POST /api/chat/test` - Test RAG pipeline
+
+### General Endpoints
+
+- `GET /` - API info
 
 ## 🔧 Manual Pipeline Testing
 
@@ -129,14 +186,15 @@ pipeline.testSearch("artificial intelligence news");
 ## 🐳 Docker Services
 
 - **Qdrant**: Vector database running on port 6333
-- **Web UI**: Available at `http://localhost:6333/dashboard`
+  - Web UI: Available at `http://localhost:6333/dashboard`
+- **Redis**: Session storage running on port 6379
 
-## 🚧 Next Steps (Phase 2)
+## 🚧 Next Steps (Phase 3)
 
-- Chat API endpoints with Gemini AI integration
-- Session management
 - Simple web UI for chatting
 - Real-time news updates
+- Enhanced search filters
+- User preferences and topics
 
 ## 📝 Notes
 
