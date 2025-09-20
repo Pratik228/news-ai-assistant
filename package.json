@@ -1,0 +1,36 @@
+{
+  "name": "news-ai-assistant",
+  "version": "1.0.0",
+  "description": "RAG-powered news chatbot using Gemini AI and Qdrant",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "ingest": "node src/services/newsIngestion.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "rss-parser": "^3.13.0",
+    "@google/generative-ai": "^0.2.1",
+    "@qdrant/js-client-rest": "^1.7.0",
+    "redis": "^4.6.10",
+    "ioredis": "^5.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "news",
+    "chatbot",
+    "rag",
+    "ai",
+    "gemini",
+    "qdrant"
+  ],
+  "author": "",
+  "license": "MIT"
+}
