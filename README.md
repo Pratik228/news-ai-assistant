@@ -142,8 +142,10 @@ test-chat.js              # Chat API testing script
 - `npm start` - Start the production server
 - `npm run dev` - Start development server with nodemon
 - `npm run ingest` - Run news ingestion and pipeline
-- `node test-chat.js` - Test the chat API endpoints
-- `node test-connections.js` - Test all external service connections
+- `npm test` - Test basic chat functionality
+- `npm run test:enhanced` - Test all enhanced features (sessions, Socket.IO, streaming)
+- `node debug-sessions.js` - Debug Redis session storage
+- `node debug-sessions.js <sessionId>` - Debug specific session
 
 ## 📡 API Endpoints
 
@@ -211,6 +213,67 @@ test-chat.js              # Chat API testing script
 - `GET /health` - Health check
 - `POST /api/chat/test` - Test RAG pipeline
 
+## 🚀 Enhanced Features Usage
+
+### Session Management
+
+```bash
+# Get all sessions
+curl http://localhost:3000/api/chat/sessions
+
+# Create new session
+curl -X POST http://localhost:3000/api/chat/sessions \
+  -H "Content-Type: application/json" \
+  -d '{"title": "My New Chat"}'
+
+# Update session title
+curl -X PUT http://localhost:3000/api/chat/sessions/sess_123 \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Updated Title"}'
+
+# Delete session
+curl -X DELETE "http://localhost:3000/api/chat/sessions/sess_123?deleteSession=true"
+```
+
+### Socket.IO Real-time Chat
+
+```javascript
+// Frontend Socket.IO usage
+const socket = io("http://localhost:3000");
+
+// Join session
+socket.emit("join-session", "sess_123");
+
+// Send message with streaming response
+socket.emit("send-message", {
+  sessionId: "sess_123",
+  message: "What is the latest news?",
+});
+
+// Listen for streaming response
+socket.on("stream-chunk", (data) => {
+  console.log("Streaming:", data.chunk);
+});
+
+socket.on("stream-complete", (data) => {
+  console.log("Complete response:", data.response);
+  console.log("Sources:", data.sources);
+});
+```
+
+### Debug Tools
+
+```bash
+# Debug all sessions
+node debug-sessions.js
+
+# Debug specific session
+node debug-sessions.js sess_mfsky5l1_1bst98qohlw
+
+# Test all enhanced features
+npm run test:enhanced
+```
+
 ## 🔧 Manual Pipeline Testing
 
 You can test individual components:
@@ -252,12 +315,64 @@ pipeline.testSearch("artificial intelligence news");
   - Web UI: Available at `http://localhost:6333/dashboard`
 - **Redis**: Session storage running on port 6379
 
-## 🚧 Next Steps (Phase 3)
+## ✨ Complete Feature Set
 
-- Simple web UI for chatting
-- Real-time news updates
-- Enhanced search filters
-- User preferences and topics
+### ✅ **Implemented Features:**
+
+#### **Backend Foundation**
+
+- ✅ RSS news ingestion from 6+ sources
+- ✅ Jina AI embeddings integration
+- ✅ Qdrant vector database with semantic search
+- ✅ Complete data pipeline automation
+
+#### **RAG & AI Integration**
+
+- ✅ Gemini 1.5 Flash integration
+- ✅ Contextual multi-turn conversations
+- ✅ Source attribution with article links
+- ✅ Markdown-formatted responses
+- ✅ Streaming AI responses (real-time)
+
+#### **Session Management**
+
+- ✅ Redis-based session persistence
+- ✅ ChatGPT-like session sidebar support
+- ✅ Auto-title generation from first message
+- ✅ Session CRUD operations (Create, Read, Update, Delete)
+- ✅ 24-hour TTL with automatic cleanup
+
+#### **Real-time Features**
+
+- ✅ Socket.IO integration
+- ✅ Live streaming responses
+- ✅ Real-time session updates
+- ✅ Multi-user session rooms
+- ✅ Typing indicators support
+
+#### **API & Endpoints**
+
+- ✅ REST API for all operations
+- ✅ Socket.IO events for real-time features
+- ✅ Comprehensive error handling
+- ✅ Health checks and monitoring
+
+#### **Developer Tools**
+
+- ✅ Debug scripts for Redis inspection
+- ✅ Comprehensive test suites
+- ✅ Connection testing utilities
+- ✅ Pipeline validation tools
+
+## 🚧 Future Enhancements
+
+- [ ] User authentication & authorization
+- [ ] Advanced search filters
+- [ ] News category classification
+- [ ] Export chat conversations
+- [ ] Admin dashboard for managing sources
+- [ ] Rate limiting and security enhancements
+- [ ] Analytics and usage metrics
 
 ## 📝 Notes
 
