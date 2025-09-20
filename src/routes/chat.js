@@ -7,6 +7,11 @@ const RAGPipeline = require("../services/ragPipeline");
 const sessionManager = new SessionManager();
 const ragPipeline = new RAGPipeline();
 
+// Helper function to get io instance
+const getIO = (req) => {
+  return req.app.get("io");
+};
+
 router.post("/", async (req, res) => {
   try {
     const { message, sessionId } = req.body;
@@ -24,8 +29,11 @@ router.post("/", async (req, res) => {
 
     // Create new session if none provided
     let currentSessionId = sessionId;
+    let isNewSession = false;
+
     if (!currentSessionId) {
       currentSessionId = await sessionManager.createSession();
+      isNewSession = true;
     } else {
       // Validate existing session
       const sessionExists = await sessionManager.sessionExists(
@@ -33,6 +41,7 @@ router.post("/", async (req, res) => {
       );
       if (!sessionExists) {
         currentSessionId = await sessionManager.createSession();
+        isNewSession = true;
       }
     }
 
@@ -44,6 +53,11 @@ router.post("/", async (req, res) => {
       type: "user",
       content: message.trim(),
     });
+
+    // Auto-generate title for new sessions based on first message
+    if (isNewSession) {
+      await sessionManager.autoGenerateTitle(currentSessionId, message.trim());
+    }
 
     // Process query through RAG pipeline
     const ragResult = await ragPipeline.processQueryWithContext(
@@ -182,15 +196,118 @@ router.get("/sessions/:sessionId/stats", async (req, res) => {
 
 router.post("/sessions", async (req, res) => {
   try {
-    const sessionId = await sessionManager.createSession();
+    const { title = "New Chat" } = req.body;
+    const sessionId = await sessionManager.createSession(title);
+
+    // Emit real-time update to all connected clients
+    const io = getIO(req);
+    if (io) {
+      io.emit("session-created", {
+        sessionId,
+        title,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     res.status(201).json({
       message: "Session created successfully",
       sessionId,
+      title,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Error creating session:", error.message);
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/chat/sessions
+ * Get all sessions (for ChatGPT-like sidebar)
+ */
+router.get("/sessions", async (req, res) => {
+  try {
+    const sessions = await sessionManager.getAllSessions();
+
+    res.json({
+      sessions,
+      count: sessions.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error getting sessions:", error.message);
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/chat/sessions/:sessionId
+ * Get session details and summary
+ */
+router.get("/sessions/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    // Validate session exists
+    const sessionExists = await sessionManager.sessionExists(sessionId);
+    if (!sessionExists) {
+      return res.status(404).json({
+        error: "Session not found",
+      });
+    }
+
+    const sessionSummary = await sessionManager.getSessionSummary(sessionId);
+
+    res.json({
+      session: sessionSummary,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error getting session:", error.message);
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message,
+    });
+  }
+});
+
+router.put("/sessions/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { title } = req.body;
+
+    if (!title) {
+      return res.status(400).json({
+        error: "Title is required",
+      });
+    }
+
+    // Validate session exists
+    const sessionExists = await sessionManager.sessionExists(sessionId);
+    if (!sessionExists) {
+      return res.status(404).json({
+        error: "Session not found",
+      });
+    }
+
+    const updatedSession = await sessionManager.updateSessionTitle(
+      sessionId,
+      title
+    );
+
+    res.json({
+      message: "Session updated successfully",
+      session: updatedSession,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error updating session:", error.message);
     res.status(500).json({
       error: "Internal server error",
       message: error.message,

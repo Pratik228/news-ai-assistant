@@ -22,6 +22,21 @@ This phase includes:
 - Multi-turn conversation support
 - Source attribution and context awareness
 
+## 🚀 Phase 3: Enhanced Backend Features ✅
+
+This phase includes:
+
+- **Comprehensive Session Management**: ChatGPT-like session sidebar support
+- **Real-time Chat with Socket.IO**: Streaming responses and live updates
+- **Session CRUD Operations**: Create, read, update, delete sessions
+- **Auto-title Generation**: Sessions automatically get titles from first message
+- **Redis Persistence**: All sessions and chat history stored in Redis
+- **Streaming AI Responses**: Real-time typed responses like ChatGPT
+- **Session Metadata**: Titles, timestamps, message counts, and activity tracking
+- **Session Title Editing**: Edit session names with pencil icon
+- **Session Deletion**: Delete sessions with trash icon
+- **Real-time Updates**: Live session updates across all connected clients
+
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
@@ -104,15 +119,18 @@ curl -X POST http://localhost:3000/api/chat \
 ```
 src/
 ├── services/
-│   ├── newsIngestion.js    # RSS feed fetching and content extraction
-│   ├── embeddings.js       # Jina AI embeddings integration
-│   ├── vectorStore.js      # Qdrant vector database operations
-│   ├── pipeline.js         # Complete pipeline orchestration
-│   ├── sessionManager.js   # Redis-based session management
-│   └── ragPipeline.js      # RAG pipeline with Gemini integration
+│   ├── newsIngestion.js        # RSS feed fetching and content extraction
+│   ├── embeddings.js           # Jina AI embeddings integration
+│   ├── vectorStore.js          # Qdrant vector database operations
+│   ├── pipeline.js             # Complete pipeline orchestration
+│   ├── sessionManager.js       # Redis-based session management
+│   ├── ragPipeline.js          # RAG pipeline with Gemini integration
+│   └── streamingRagPipeline.js # Streaming RAG with Socket.IO support
 ├── routes/
-│   └── chat.js            # Chat API endpoints
-└── server.js              # Express server setup
+│   ├── chat.js                 # REST API chat endpoints
+│   └── socketChat.js           # Socket.IO real-time chat handler
+├── server.js                   # Express server with Socket.IO setup
+└── debug-sessions.js           # Debug tool for Redis session inspection
 
 data/                      # JSON files with ingested articles
 docker-compose.yml         # Qdrant + Redis services setup
@@ -140,15 +158,58 @@ test-chat.js              # Chat API testing script
   }
   ```
 
-- `GET /api/chat/sessions/:sessionId/history` - Get chat history
-- `DELETE /api/chat/sessions/:sessionId` - Clear session or delete it
-- `GET /api/chat/sessions/:sessionId/stats` - Get session statistics
+### Session Management Endpoints
+
+- `GET /api/chat/sessions` - Get all sessions (for sidebar)
 - `POST /api/chat/sessions` - Create a new session
-- `POST /api/chat/test` - Test RAG pipeline
+  ```json
+  {
+    "title": "New Chat" // optional
+  }
+  ```
+- `GET /api/chat/sessions/:sessionId` - Get session details
+- `PUT /api/chat/sessions/:sessionId` - Update session title
+  ```json
+  {
+    "title": "Updated Session Name"
+  }
+  ```
+- `DELETE /api/chat/sessions/:sessionId?deleteSession=true` - Delete session
+- `GET /api/chat/sessions/:sessionId/history` - Get chat history
+- `GET /api/chat/sessions/:sessionId/stats` - Get session statistics
+
+### Socket.IO Events (Real-time)
+
+#### **Client → Server Events:**
+
+- `join-session` - Join a session room
+- `leave-session` - Leave a session room
+- `send-message` - Send message and get streaming response
+- `get-history` - Get session chat history
+- `create-session` - Create new session
+- `get-sessions` - Get all sessions
+- `update-session-title` - Update session title
+- `delete-session` - Delete session
+- `typing` - Typing indicator
+
+#### **Server → Client Events:**
+
+- `stream-chunk` - Receive streaming response chunks
+- `stream-complete` - Streaming response completed
+- `session-created` - New session created
+- `session-updated` - Session title updated
+- `session-title-updated` - Session title updated (broadcast)
+- `session-deleted` - Session deleted
+- `chat-history` - Session chat history received
+- `sessions-list` - All sessions list received
+- `joined-session` - Confirmed joined session room
+- `error` - Error occurred
 
 ### General Endpoints
 
 - `GET /` - API info
+- `GET /health` - Health check
+- `POST /api/chat/test` - Test RAG pipeline
 
 ## 🔧 Manual Pipeline Testing
 

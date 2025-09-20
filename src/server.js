@@ -1,8 +1,11 @@
 const express = require("express");
 const cors = require("cors");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 3000;
 
 // CORS configuration for production
@@ -31,8 +34,25 @@ app.get("/", (req, res) => {
   });
 });
 
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      process.env.FRONTEND_URL,
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
 // Import and use route modules
 app.use("/api/chat", require("./routes/chat"));
+
+// Initialize Socket.IO chat handler
+const SocketChatHandler = require("./routes/socketChat");
+new SocketChatHandler(io);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -48,8 +68,10 @@ app.use("*", (req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 News AI Assistant server running on port ${PORT}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 Socket.IO ready for real-time connections`);
 });
 
 module.exports = app;

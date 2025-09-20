@@ -28,14 +28,16 @@ class SessionManager {
   /**
    * Create a new session
    */
-  async createSession() {
+  async createSession(title = "New Chat") {
     try {
       const sessionId = this.generateSessionId();
       const sessionData = {
         id: sessionId,
+        title: title,
         createdAt: new Date().toISOString(),
         lastActivity: new Date().toISOString(),
         messageCount: 0,
+        isActive: true,
       };
 
       await this.redis.setex(
@@ -208,7 +210,7 @@ class SessionManager {
   }
 
   /**
-   * Get all active sessions (for debugging)
+   * Get all active sessions (for ChatGPT-like sidebar)
    */
   async getAllSessions() {
     try {
@@ -218,9 +220,21 @@ class SessionManager {
       for (const key of keys) {
         const sessionData = await this.redis.get(key);
         if (sessionData) {
-          sessions.push(JSON.parse(sessionData));
+          const session = JSON.parse(sessionData);
+          // Get message count for display
+          const chatHistory = await this.getChatHistory(session.id, 1);
+          session.lastMessage =
+            chatHistory && chatHistory.length > 0
+              ? chatHistory[chatHistory.length - 1]
+              : null;
+          sessions.push(session);
         }
       }
+
+      // Sort by last activity (most recent first)
+      sessions.sort(
+        (a, b) => new Date(b.lastActivity) - new Date(a.lastActivity)
+      );
 
       return sessions;
     } catch (error) {
@@ -229,9 +243,79 @@ class SessionManager {
     }
   }
 
-  /**
-   * Check if session exists
-   */
+  async updateSessionTitle(sessionId, newTitle) {
+    try {
+      const sessionData = await this.getSession(sessionId);
+      if (!sessionData) {
+        throw new Error("Session not found");
+      }
+
+      sessionData.title = newTitle;
+      sessionData.lastActivity = new Date().toISOString();
+
+      await this.redis.setex(
+        `${this.sessionPrefix}${sessionId}`,
+        this.sessionTTL,
+        JSON.stringify(sessionData)
+      );
+
+      console.log(`📝 Updated session title: ${sessionId} -> "${newTitle}"`);
+      return sessionData;
+    } catch (error) {
+      console.error("Error updating session title:", error.message);
+      throw error;
+    }
+  }
+
+  async autoGenerateTitle(sessionId, firstMessage) {
+    try {
+      if (!firstMessage || firstMessage.length < 10) return;
+
+      // Generate a title from the first message (truncate to 50 chars)
+      const title =
+        firstMessage.length > 50
+          ? firstMessage.substring(0, 47) + "..."
+          : firstMessage;
+
+      await this.updateSessionTitle(sessionId, title);
+      return title;
+    } catch (error) {
+      console.error("Error auto-generating title:", error.message);
+      // Don't throw error, just continue without title update
+    }
+  }
+
+  async getSessionSummary(sessionId) {
+    try {
+      const session = await this.getSession(sessionId);
+      if (!session) return null;
+
+      const chatHistory = await this.getChatHistory(sessionId, 1);
+      const lastMessage =
+        chatHistory && chatHistory.length > 0
+          ? chatHistory[chatHistory.length - 1]
+          : null;
+
+      return {
+        id: session.id,
+        title: session.title,
+        createdAt: session.createdAt,
+        lastActivity: session.lastActivity,
+        messageCount: session.messageCount,
+        lastMessage: lastMessage
+          ? {
+              content: lastMessage.content,
+              type: lastMessage.type,
+              timestamp: lastMessage.timestamp,
+            }
+          : null,
+      };
+    } catch (error) {
+      console.error("Error getting session summary:", error.message);
+      throw error;
+    }
+  }
+
   async sessionExists(sessionId) {
     try {
       const exists = await this.redis.exists(
