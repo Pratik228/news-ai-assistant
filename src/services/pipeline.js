@@ -6,10 +6,7 @@ require("dotenv").config();
 class NewsPipeline {
   constructor() {
     this.embeddings = new JinaEmbeddings(process.env.JINA_API_KEY);
-    this.vectorStore = new VectorStore(
-      process.env.QDRANT_URL || "http://localhost:6333",
-      process.env.QDRANT_API_KEY
-    );
+    this.vectorStore = new VectorStore(); // Will use environment variables
   }
 
   async runPipeline() {

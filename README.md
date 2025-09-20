@@ -42,8 +42,9 @@ Edit `.env` and add your API keys:
 
 - `GEMINI_API_KEY`: Get from [Google AI Studio](https://aistudio.google.com/)
 - `JINA_API_KEY`: Get from [Jina AI](https://jina.ai/)
-- `REDIS_HOST`: Redis host (default: localhost)
-- `REDIS_PORT`: Redis port (default: 6379)
+- `REDIS_URL`: Redis connection URL (e.g., `rediss://default:password@host:6379`)
+- `QDRANT_URL`: Qdrant cluster URL (e.g., `https://cluster-id.region.aws.cloud.qdrant.io:6333`)
+- `QDRANT_API_KEY`: Qdrant API key for authentication
 
 ### 3. Start Services (Qdrant + Redis)
 
@@ -124,6 +125,7 @@ test-chat.js              # Chat API testing script
 - `npm run dev` - Start development server with nodemon
 - `npm run ingest` - Run news ingestion and pipeline
 - `node test-chat.js` - Test the chat API endpoints
+- `node test-connections.js` - Test all external service connections
 
 ## 📡 API Endpoints
 

@@ -9,10 +9,7 @@ class RAGPipeline {
     this.model = this.gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     this.embeddings = new JinaEmbeddings(process.env.JINA_API_KEY);
-    this.vectorStore = new VectorStore(
-      process.env.QDRANT_URL || "http://localhost:6333",
-      process.env.QDRANT_API_KEY
-    );
+    this.vectorStore = new VectorStore(); // Will use environment variables
 
     this.maxContextArticles = 5;
     this.minSimilarityScore = 0.6;

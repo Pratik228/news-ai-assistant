@@ -3,10 +3,9 @@ require("dotenv").config();
 
 class SessionManager {
   constructor() {
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST || "localhost",
-      port: process.env.REDIS_PORT || 6379,
-      password: process.env.REDIS_PASSWORD || undefined,
+    console.log("🔗 Using Redis URL connection");
+
+    this.redis = new Redis(process.env.REDIS_URL, {
       retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
       lazyConnect: true,
@@ -17,12 +16,18 @@ class SessionManager {
     this.chatHistoryPrefix = "chat_history:";
   }
 
+  /**
+   * Generate a unique session ID
+   */
   generateSessionId() {
     const timestamp = Date.now().toString(36);
     const randomStr = Math.random().toString(36).substring(2, 15);
     return `sess_${timestamp}_${randomStr}`;
   }
 
+  /**
+   * Create a new session
+   */
   async createSession() {
     try {
       const sessionId = this.generateSessionId();
@@ -54,6 +59,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Get session data
+   */
   async getSession(sessionId) {
     try {
       const sessionData = await this.redis.get(
@@ -71,6 +79,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Update session activity
+   */
   async updateSessionActivity(sessionId) {
     try {
       const sessionData = await this.getSession(sessionId);
@@ -100,6 +111,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Add message to chat history
+   */
   async addMessage(sessionId, message) {
     try {
       const chatHistory = await this.getChatHistory(sessionId);
@@ -131,6 +145,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Get chat history for a session
+   */
   async getChatHistory(sessionId, limit = 50) {
     try {
       const chatHistoryData = await this.redis.get(
@@ -151,6 +168,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Clear chat history for a session
+   */
   async clearChatHistory(sessionId) {
     try {
       await this.redis.setex(
@@ -167,6 +187,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Delete a session completely
+   */
   async deleteSession(sessionId) {
     try {
       const pipeline = this.redis.pipeline();
@@ -184,6 +207,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Get all active sessions (for debugging)
+   */
   async getAllSessions() {
     try {
       const keys = await this.redis.keys(`${this.sessionPrefix}*`);
@@ -203,6 +229,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Check if session exists
+   */
   async sessionExists(sessionId) {
     try {
       const exists = await this.redis.exists(
@@ -215,6 +244,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Get session statistics
+   */
   async getSessionStats(sessionId) {
     try {
       const session = await this.getSession(sessionId);
@@ -238,6 +270,9 @@ class SessionManager {
     }
   }
 
+  /**
+   * Close Redis connection
+   */
   async close() {
     try {
       await this.redis.quit();

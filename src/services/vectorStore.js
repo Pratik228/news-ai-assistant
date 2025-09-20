@@ -1,10 +1,13 @@
 const { QdrantClient } = require("@qdrant/js-client-rest");
+require("dotenv").config();
 
 class VectorStore {
-  constructor(url = "http://localhost:6333", apiKey = null) {
+  constructor() {
+    // Use environment variables for Qdrant connection
+
     this.client = new QdrantClient({
-      url: url,
-      apiKey: apiKey,
+      url: process.env.QDRANT_URL,
+      apiKey: process.env.QDRANT_API_KEY,
     });
     this.collectionName = "news_articles";
     this.vectorSize = 768; // Jina embeddings v2 base dimension
