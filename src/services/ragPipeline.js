@@ -108,7 +108,7 @@ class RAGPipeline {
 
   async generateResponse(query, context, sources) {
     try {
-      const prompt = `You are a helpful news assistant. Answer the user's question based on the provided news articles. 
+      const prompt = `You are a helpful news assistant. Answer the user's question based on the provided news articles using professional markdown formatting.
 
 IMPORTANT INSTRUCTIONS:
 - Use ONLY information from the provided articles
@@ -118,11 +118,20 @@ IMPORTANT INSTRUCTIONS:
 - Don't make up information that isn't in the articles
 - If asked about topics not covered in the articles, politely explain that you don't have recent information on that topic
 
+FORMATTING REQUIREMENTS:
+- Use **bold text** for key points and important information
+- Use bullet points (-) for lists and multiple items
+- Use ## subheadings when discussing different topics
+- Use clear paragraph breaks for readability
+- Use > blockquotes for direct quotes or important statements
+- Use [link text](URL) format for any URLs mentioned
+- Use *italics* for emphasis on specific terms
+
 USER QUESTION: ${query}
 
 ${context}
 
-Please provide a helpful response based on the above articles:`;
+Please provide a well-formatted markdown response based on the above articles:`;
 
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
@@ -230,7 +239,7 @@ Please provide a helpful response based on the above articles:`;
 
   async generateContextualResponse(query, fullContext, sources) {
     try {
-      const prompt = `You are a helpful news assistant having a conversation with a user. Answer the user's question based on the provided news articles and conversation context.
+      const prompt = `You are a helpful news assistant having a conversation with a user. Answer the user's question based on the provided news articles and conversation context using professional markdown formatting.
 
 IMPORTANT INSTRUCTIONS:
 - Use information from both the conversation history and the provided articles
@@ -241,11 +250,20 @@ IMPORTANT INSTRUCTIONS:
 - Mention the sources when relevant
 - Don't make up information that isn't in the articles
 
+FORMATTING REQUIREMENTS:
+- Use **bold text** for key points and important information
+- Use bullet points (-) for lists and multiple items
+- Use ## subheadings when discussing different topics
+- Use clear paragraph breaks for readability
+- Use > blockquotes for direct quotes or important statements
+- Use [link text](URL) format for any URLs mentioned
+- Use *italics* for emphasis on specific terms
+
 ${fullContext}
 
 CURRENT USER QUESTION: ${query}
 
-Please provide a helpful response that considers both the conversation context and the recent articles:`;
+Please provide a well-formatted markdown response that considers both the conversation context and the recent articles:`;
 
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
