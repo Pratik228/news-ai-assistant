@@ -47,12 +47,6 @@ npm install
 
 ### 2. Set up Environment Variables
 
-Copy the example environment file and add your API keys:
-
-```bash
-cp .env.example .env
-```
-
 Edit `.env` and add your API keys:
 
 - `GEMINI_API_KEY`: Get from [Google AI Studio](https://aistudio.google.com/)
@@ -61,18 +55,7 @@ Edit `.env` and add your API keys:
 - `QDRANT_URL`: Qdrant cluster URL (e.g., `https://cluster-id.region.aws.cloud.qdrant.io:6333`)
 - `QDRANT_API_KEY`: Qdrant API key for authentication
 
-### 3. Start Services (Qdrant + Redis)
-
-```bash
-docker-compose up -d
-```
-
-This will start:
-
-- Qdrant on `http://localhost:6333`
-- Redis on `localhost:6379`
-
-### 4. Run the Complete Pipeline
+### 3. Run the Complete Pipeline
 
 ```bash
 npm run ingest
@@ -85,7 +68,7 @@ This will:
 - Generate embeddings using Jina AI
 - Store articles and embeddings in Qdrant
 
-### 5. Start the Server
+### 4. Start the Server
 
 ```bash
 npm start
@@ -98,21 +81,6 @@ npm run dev
 ```
 
 The server will be available at `http://localhost:3000`
-
-### 6. Test the Chat API
-
-```bash
-node test-chat.js
-```
-
-Or test manually:
-
-```bash
-# Send a chat message
-curl -X POST http://localhost:3000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is the latest news about AI?"}'
-```
 
 ## 📁 Project Structure
 
@@ -207,12 +175,6 @@ test-chat.js              # Chat API testing script
 - `joined-session` - Confirmed joined session room
 - `error` - Error occurred
 
-### General Endpoints
-
-- `GET /` - API info
-- `GET /health` - Health check
-- `POST /api/chat/test` - Test RAG pipeline
-
 ## 🚀 Enhanced Features Usage
 
 ### Session Management
@@ -261,19 +223,6 @@ socket.on("stream-complete", (data) => {
 });
 ```
 
-### Debug Tools
-
-```bash
-# Debug all sessions
-node debug-sessions.js
-
-# Debug specific session
-node debug-sessions.js sess_mfsky5l1_1bst98qohlw
-
-# Test all enhanced features
-npm run test:enhanced
-```
-
 ## 🔧 Manual Pipeline Testing
 
 You can test individual components:
@@ -309,12 +258,6 @@ const pipeline = new NewsPipeline();
 pipeline.testSearch("artificial intelligence news");
 ```
 
-## 🐳 Docker Services
-
-- **Qdrant**: Vector database running on port 6333
-  - Web UI: Available at `http://localhost:6333/dashboard`
-- **Redis**: Session storage running on port 6379
-
 ## ✨ Complete Feature Set
 
 ### ✅ **Implemented Features:**
@@ -347,15 +290,12 @@ pipeline.testSearch("artificial intelligence news");
 - ✅ Socket.IO integration
 - ✅ Live streaming responses
 - ✅ Real-time session updates
-- ✅ Multi-user session rooms
-- ✅ Typing indicators support
 
 #### **API & Endpoints**
 
 - ✅ REST API for all operations
 - ✅ Socket.IO events for real-time features
 - ✅ Comprehensive error handling
-- ✅ Health checks and monitoring
 
 #### **Developer Tools**
 
