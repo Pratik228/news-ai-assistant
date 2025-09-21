@@ -31,9 +31,14 @@ class SessionManager {
   async createSession(title = "New Chat") {
     try {
       const sessionId = this.generateSessionId();
+
+      // Ensure we never create a session with null or undefined title
+      const safeTitle =
+        title && title.trim() !== "" ? title.trim() : "New Chat";
+
       const sessionData = {
         id: sessionId,
-        title: title,
+        title: safeTitle,
         createdAt: new Date().toISOString(),
         lastActivity: new Date().toISOString(),
         messageCount: 0,
@@ -53,7 +58,9 @@ class SessionManager {
         JSON.stringify([])
       );
 
-      console.log(`✅ Created new session: ${sessionId}`);
+      console.log(
+        `✅ Created new session: ${sessionId} with title: "${safeTitle}"`
+      );
       return sessionId;
     } catch (error) {
       console.error("Error creating session:", error.message);
@@ -221,6 +228,23 @@ class SessionManager {
         const sessionData = await this.redis.get(key);
         if (sessionData) {
           const session = JSON.parse(sessionData);
+
+          // Fix any existing sessions with null titles
+          if (
+            !session.title ||
+            session.title === null ||
+            session.title.trim() === ""
+          ) {
+            console.log(`🔧 Fixing null title for session ${session.id}`);
+            session.title = "New Chat";
+            // Update the session in Redis with the fixed title
+            await this.redis.setex(
+              `${this.sessionPrefix}${session.id}`,
+              this.sessionTTL,
+              JSON.stringify(session)
+            );
+          }
+
           // Get message count for display
           const chatHistory = await this.getChatHistory(session.id, 1);
           session.lastMessage =
@@ -250,7 +274,11 @@ class SessionManager {
         throw new Error("Session not found");
       }
 
-      sessionData.title = newTitle;
+      // Ensure we never set null or undefined titles
+      const safeTitle =
+        newTitle && newTitle.trim() !== "" ? newTitle.trim() : "New Chat";
+
+      sessionData.title = safeTitle;
       sessionData.lastActivity = new Date().toISOString();
 
       await this.redis.setex(
@@ -259,7 +287,7 @@ class SessionManager {
         JSON.stringify(sessionData)
       );
 
-      console.log(`📝 Updated session title: ${sessionId} -> "${newTitle}"`);
+      console.log(`📝 Updated session title: ${sessionId} -> "${safeTitle}"`);
       return sessionData;
     } catch (error) {
       console.error("Error updating session title:", error.message);
@@ -269,19 +297,45 @@ class SessionManager {
 
   async autoGenerateTitle(sessionId, firstMessage) {
     try {
-      if (!firstMessage || firstMessage.length < 10) return;
+      // Always ensure we have a valid title, even if message is short
+      if (!firstMessage || firstMessage.trim().length === 0) {
+        console.log(
+          `⚠️ Empty message provided for title generation in session ${sessionId}`
+        );
+        return;
+      }
 
       // Generate a title from the first message (truncate to 50 chars)
+      // Even short messages should generate a title
+      const trimmedMessage = firstMessage.trim();
       const title =
-        firstMessage.length > 50
-          ? firstMessage.substring(0, 47) + "..."
-          : firstMessage;
+        trimmedMessage.length > 50
+          ? trimmedMessage.substring(0, 47) + "..."
+          : trimmedMessage;
 
+      console.log(
+        `🔄 Auto-generating title for session ${sessionId}: "${title}"`
+      );
       await this.updateSessionTitle(sessionId, title);
+      console.log(
+        `✅ Successfully updated title for session ${sessionId}: "${title}"`
+      );
       return title;
     } catch (error) {
-      console.error("Error auto-generating title:", error.message);
-      // Don't throw error, just continue without title update
+      console.error(
+        `❌ Error auto-generating title for session ${sessionId}:`,
+        error.message
+      );
+      // Ensure we never leave a session with null title - set a fallback
+      try {
+        await this.updateSessionTitle(sessionId, "New Chat");
+        console.log(`🔄 Set fallback title for session ${sessionId}`);
+      } catch (fallbackError) {
+        console.error(
+          `❌ Failed to set fallback title for session ${sessionId}:`,
+          fallbackError.message
+        );
+      }
     }
   }
 

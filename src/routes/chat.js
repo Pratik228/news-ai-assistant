@@ -57,6 +57,27 @@ router.post("/", async (req, res) => {
     // Auto-generate title for new sessions based on first message
     if (isNewSession) {
       await sessionManager.autoGenerateTitle(currentSessionId, message.trim());
+    } else {
+      // Check if this is a session that needs title generation
+      // (has "New Chat" title and this is the first message)
+      const sessionData = await sessionManager.getSession(currentSessionId);
+      const chatHistory = await sessionManager.getChatHistory(currentSessionId);
+
+      if (
+        sessionData &&
+        sessionData.title === "New Chat" &&
+        chatHistory &&
+        chatHistory.length === 1
+      ) {
+        // Only user message, no assistant response yet
+        console.log(
+          `🔄 Auto-generating title for existing session ${currentSessionId} with first message`
+        );
+        await sessionManager.autoGenerateTitle(
+          currentSessionId,
+          message.trim()
+        );
+      }
     }
 
     // Process query through RAG pipeline

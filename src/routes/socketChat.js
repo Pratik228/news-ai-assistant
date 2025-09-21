@@ -77,6 +77,31 @@ class SocketChatHandler {
               currentSessionId,
               message.trim()
             );
+          } else {
+            // Check if this is a session that needs title generation
+            // (has "New Chat" title and this is the first message)
+            const sessionData = await this.sessionManager.getSession(
+              currentSessionId
+            );
+            const chatHistory = await this.sessionManager.getChatHistory(
+              currentSessionId
+            );
+
+            if (
+              sessionData &&
+              sessionData.title === "New Chat" &&
+              chatHistory &&
+              chatHistory.length === 1
+            ) {
+              // Only user message, no assistant response yet
+              console.log(
+                `🔄 Auto-generating title for existing session ${currentSessionId} with first message`
+              );
+              await this.sessionManager.autoGenerateTitle(
+                currentSessionId,
+                message.trim()
+              );
+            }
           }
 
           // Emit user message to session room
